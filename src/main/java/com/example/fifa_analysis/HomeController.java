@@ -16,13 +16,13 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
-@RestController
+@Controller
 @RequestMapping("/api")
 @RequiredArgsConstructor   //사용하는 서비스의 생성자를 자동으로 소환(final 변수)
 public class HomeController {
 
     private final UserService userService;
-    @GetMapping("/hello")
+    @GetMapping("/home")
     public String helloWorld() {
         List<String> list=new ArrayList<>();
         list.add("mudong");
@@ -35,6 +35,11 @@ public class HomeController {
         System.out.println("닉네임:"+userDTO.getNickname());
         System.out.println("레벨:"+userDTO.getLevel());
 
-        return "안녕!";
+        return "/fifa/main";
+    }
+
+    @GetMapping("/tradeList")
+    public String tradeList(){
+        return "/fifa/tradeList";
     }
 }
