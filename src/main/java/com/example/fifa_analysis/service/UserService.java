@@ -22,7 +22,7 @@ public class UserService {
         final HttpEntity<String> entity=new HttpEntity<>(httpHeaders);
         RestTemplate restTemplate=new RestTemplate();
 
-        return restTemplate.exchange(user_nickname_url, HttpMethod.GET,entity,UserDTO.class,"PAXR").getBody();
+        return restTemplate.exchange(user_nickname_url, HttpMethod.GET,entity,UserDTO.class,"무동포동").getBody();
     }
 
     public BuyDTO[] requestBuyInfo(String userId){

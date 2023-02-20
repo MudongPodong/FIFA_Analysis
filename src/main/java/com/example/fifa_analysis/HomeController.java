@@ -1,9 +1,7 @@
 package com.example.fifa_analysis;
 
-import com.example.fifa_analysis.DTO.BuyDTO;
-import com.example.fifa_analysis.DTO.BuyPlayerDTO;
-import com.example.fifa_analysis.DTO.PlayerDTO;
-import com.example.fifa_analysis.DTO.UserDTO;
+import com.example.fifa_analysis.DTO.*;
+import com.example.fifa_analysis.service.SeasonService;
 import com.example.fifa_analysis.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +12,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +23,7 @@ import java.util.List;
 public class HomeController {
 
     private final UserService userService;
+    private final SeasonService seasonService;
     private UserDTO userDTO;
     private BuyDTO[] buyDTOS;
 
@@ -57,8 +54,13 @@ public class HomeController {
         for(BuyDTO bd:buyDTOS){
             buyPlayerDTO=new BuyPlayerDTO();
             buyPlayerDTO.setPlayername(players.get(bd.getSpid()));
+            SeasonDTO seasonDTO=seasonService.findById(Integer.parseInt(bd.getSpid().substring(0,3)));
+            buyPlayerDTO.setSeason(seasonDTO.getSeasonname());  //나중에 추가된거(시즌정보)
+            buyPlayerDTO.setSeason_img(seasonDTO.getSeason_img());  //시즌이미지 가져오기
+            //https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p101000246.png
+            buyPlayerDTO.setPlayer_img("https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p"+bd.getSpid()+".png");
             buyPlayerDTO.setGrade(bd.getGrade());
-            buyPlayerDTO.setValue(bd.getValue());
+            buyPlayerDTO.setValue(bd.getValue().replaceAll("\\B(?=(\\d{3})+(?!\\d))", ","));
             buyPlayerDTO.setTradeDate(bd.getTradeDate());
             boughtList.add(buyPlayerDTO);
         }
