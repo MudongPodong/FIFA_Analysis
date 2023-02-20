@@ -1,5 +1,7 @@
 package com.example.fifa_analysis.service;
 
+import com.example.fifa_analysis.DTO.BuyDTO;
+import com.example.fifa_analysis.DTO.PlayerDTO;
 import com.example.fifa_analysis.DTO.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
@@ -20,6 +22,32 @@ public class UserService {
         final HttpEntity<String> entity=new HttpEntity<>(httpHeaders);
         RestTemplate restTemplate=new RestTemplate();
 
-        return restTemplate.exchange(user_nickname_url, HttpMethod.GET,entity,UserDTO.class,"무동포동").getBody();
+        return restTemplate.exchange(user_nickname_url, HttpMethod.GET,entity,UserDTO.class,"PAXR").getBody();
     }
+
+    public BuyDTO[] requestBuyInfo(String userId){
+        final String BuyInfoUrl="https://api.nexon.co.kr/fifaonline4/v1.0/users/{accessid}/markets?tradetype={tradetype}&offset={offset}&limit={limit}";
+        final HttpHeaders httpHeaders=new HttpHeaders();
+        httpHeaders.set("Authorization",api_key);
+        final HttpEntity<String> entity=new HttpEntity<>(httpHeaders);
+        RestTemplate restTemplate=new RestTemplate();
+
+        BuyDTO[] buyDTOS=null;
+        int offset=1,limit=20;
+
+        return restTemplate.exchange(BuyInfoUrl,HttpMethod.GET,entity,BuyDTO[].class,userId,"buy",offset,limit).getBody();
+    }
+
+    public PlayerDTO[] requestPlayerInfo(){
+        final String PlayerInfoUrl="https://static.api.nexon.co.kr/fifaonline4/latest/spid.json";
+        final HttpHeaders httpHeaders=new HttpHeaders();
+        httpHeaders.set("Authorization",api_key);
+        final HttpEntity<String> entity=new HttpEntity<>(httpHeaders);
+        RestTemplate restTemplate=new RestTemplate();
+
+        PlayerDTO[] playerDTOS=null;
+
+        return restTemplate.exchange(PlayerInfoUrl,HttpMethod.GET,entity,PlayerDTO[].class).getBody();
+    }
+
 }
