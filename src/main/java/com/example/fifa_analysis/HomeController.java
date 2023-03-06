@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.python.util.PythonInterpreter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ public class HomeController {
     private final SeasonService seasonService;
     private UserDTO userDTO;
     private BuyDTO[] buyDTOS;
+    private BuyDTO[] sellDTOS;
 
     private HashMap<String,String> players;
     @GetMapping("/home")
@@ -46,27 +48,51 @@ public class HomeController {
 
     @GetMapping("/tradeList")
     public String tradeList(Model model){
-        buyDTOS=userService.requestBuyInfo(userDTO.getAccessId());
-        model.addAttribute("buyDTOS",buyDTOS);
-        List<BuyPlayerDTO> boughtList=new ArrayList<>();
-        BuyPlayerDTO buyPlayerDTO=null;
-
-        for(BuyDTO bd:buyDTOS){
-            buyPlayerDTO=new BuyPlayerDTO();
-            buyPlayerDTO.setPlayername(players.get(bd.getSpid()));
-            SeasonDTO seasonDTO=seasonService.findById(Integer.parseInt(bd.getSpid().substring(0,3)));
-            buyPlayerDTO.setSeason(seasonDTO.getSeasonname());  //나중에 추가된거(시즌정보)
-            buyPlayerDTO.setSeason_img(seasonDTO.getSeason_img());  //시즌이미지 가져오기
-            //https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p101000246.png
-            buyPlayerDTO.setPlayer_img("https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p"+bd.getSpid()+".png");
-            buyPlayerDTO.setGrade(bd.getGrade());
-            buyPlayerDTO.setValue(bd.getValue().replaceAll("\\B(?=(\\d{3})+(?!\\d))", ","));
-            buyPlayerDTO.setTradeDate(bd.getTradeDate());
-            boughtList.add(buyPlayerDTO);
+        players=new HashMap<>();              /* 모든선수 정보가져오기 -----> 추후에 DB에 저장해야할듯(DB에 저장하면 이 코드 필요없음 & 페이지로딩 엄청 짧아짐)*/
+        PlayerDTO[] playerDTOS=userService.requestPlayerInfo();
+        for(PlayerDTO player:playerDTOS){
+            players.put(player.getId(),player.getName());
         }
+
+        buyDTOS=userService.requestBuyInfo(userDTO.getAccessId(),"buy");
+        sellDTOS= userService.requestBuyInfo(userDTO.getAccessId(),"sell");
+        List<BuyPlayerDTO> boughtList=new ArrayList<>();
+        List<BuyPlayerDTO> soldList=new ArrayList<>();
+        long boughtPrice=0;
+        long soldPrice=0;
+        long margin=0;
+
+        boughtList=BuyPlayerDTO.tobuyPlayerDTOS(buyDTOS,players,seasonService);
+        soldList=BuyPlayerDTO.tobuyPlayerDTOS(sellDTOS,players,seasonService);
+
+        for(BuyPlayerDTO buyPlayerDTO:boughtList) boughtPrice+=buyPlayerDTO.getOrigin_value();
+        for(BuyPlayerDTO buyPlayerDTO:soldList) soldPrice+=buyPlayerDTO.getOrigin_value();
+        margin=soldPrice-boughtPrice; //차익
+
         model.addAttribute("boughtList",boughtList);
+        model.addAttribute("boughtPrice",Long.toString(boughtPrice).replaceAll("\\B(?=(\\d{3})+(?!\\d))", ","));
+        model.addAttribute("soldList",soldList);
+        model.addAttribute("soldPrice",Long.toString(soldPrice).replaceAll("\\B(?=(\\d{3})+(?!\\d))", ","));
+        model.addAttribute("margin",Long.toString(margin).replaceAll("\\B(?=(\\d{3})+(?!\\d))", ","));
 
         return "/fifa/tradeList";
+    }
+
+    @GetMapping("/match_analysis")
+    public String matchAnalysis(Model model){
+        MatchDetailedDTO matchDetailedDTO=null;
+
+        String[] matchRecord= userService.requestMatchRecord(userDTO.getAccessId());
+        for(String matchid:matchRecord){  //여기서 바로 내가 다루고싶은 데이터 가져오기
+            matchDetailedDTO=userService.requestMatchDetailed(matchid);
+            if(matchDetailedDTO.getMatchInfoDTO().getShoot().getGoalTotal()!=0){
+                System.out.println("이경기에서 골넣은수는 "+matchDetailedDTO.getMatchInfoDTO().getShoot().getGoalTotal()+"이다 ");
+            }
+        }
+
+        model.addAttribute("matchRecord",matchRecord);
+
+        return "/fifa/match_analysis";
     }
 
         @GetMapping("/collect")

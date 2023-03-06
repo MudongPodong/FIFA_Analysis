@@ -1,12 +1,15 @@
 package com.example.fifa_analysis.service;
 
 import com.example.fifa_analysis.DTO.BuyDTO;
+import com.example.fifa_analysis.DTO.MatchDetailedDTO;
 import com.example.fifa_analysis.DTO.PlayerDTO;
 import com.example.fifa_analysis.DTO.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -14,7 +17,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class UserService {
     private final String user_nickname_url = "https://api.nexon.co.kr/fifaonline4/v1.0/users?nickname={nickname}";
-    private final String api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFwcC1SYXRlLUxpbWl0IjoiNTAwOjEwIiwiYWNjb3VudF9pZCI6IjEzNTkyNjY5OTMiLCJhdXRoX2lkIjoiMiIsImV4cCI6MTY4ODA0MzE1MywiaWF0IjoxNjcyNDkxMTUzLCJuYmYiOjE2NzI0OTExNTMsInNlcnZpY2VfaWQiOiI0MzAwMTE0ODEiLCJ0b2tlbl90eXBlIjoiQWNjZXNzVG9rZW4ifQ.2F-blYI7sLKjAsjeMRnslEv8TLniFS4UytTxV1Vi1Aw";
+    private final String api_key="your key";
     public UserDTO requestUserInfo(){
         final String UserInfoUrl = "https://api.nexon.co.kr/fifaonline4/v1.0/users?nickname={nickname}";
         final HttpHeaders httpHeaders=new HttpHeaders();
@@ -25,7 +28,7 @@ public class UserService {
         return restTemplate.exchange(user_nickname_url, HttpMethod.GET,entity,UserDTO.class,"무동포동").getBody();
     }
 
-    public BuyDTO[] requestBuyInfo(String userId){
+    public BuyDTO[] requestBuyInfo(String userId,String type){
         final String BuyInfoUrl="https://api.nexon.co.kr/fifaonline4/v1.0/users/{accessid}/markets?tradetype={tradetype}&offset={offset}&limit={limit}";
         final HttpHeaders httpHeaders=new HttpHeaders();
         httpHeaders.set("Authorization",api_key);
@@ -33,9 +36,9 @@ public class UserService {
         RestTemplate restTemplate=new RestTemplate();
 
         BuyDTO[] buyDTOS=null;
-        int offset=1,limit=20;
+        int offset=0,limit=20;
 
-        return restTemplate.exchange(BuyInfoUrl,HttpMethod.GET,entity,BuyDTO[].class,userId,"buy",offset,limit).getBody();
+        return restTemplate.exchange(BuyInfoUrl,HttpMethod.GET,entity,BuyDTO[].class,userId,type,offset,limit).getBody();
     }
 
     public PlayerDTO[] requestPlayerInfo(){
@@ -45,9 +48,29 @@ public class UserService {
         final HttpEntity<String> entity=new HttpEntity<>(httpHeaders);
         RestTemplate restTemplate=new RestTemplate();
 
-        PlayerDTO[] playerDTOS=null;
-
         return restTemplate.exchange(PlayerInfoUrl,HttpMethod.GET,entity,PlayerDTO[].class).getBody();
     }
 
+    public String[] requestMatchRecord(String userId){   //매치의 해시값 가져오기
+        final String MatchInfoUrl="https://api.nexon.co.kr/fifaonline4/v1.0/users/{accessid}/matches?matchtype={matchtype}&offset={offset}&limit={limit}";
+        final HttpHeaders httpHeaders=new HttpHeaders();
+        httpHeaders.set("Authorization",api_key);
+        final HttpEntity<String> entity=new HttpEntity<>(httpHeaders);
+        RestTemplate restTemplate=new RestTemplate();
+
+        int offset=0,limit=2;
+        return restTemplate.exchange(MatchInfoUrl,HttpMethod.GET,entity,String[].class,userId,50,offset,limit).getBody();
+    }
+
+    public MatchDetailedDTO requestMatchDetailed(String matchid){
+        System.out.println("matchid:"+matchid);
+        final String MatchDetailedInfoUrl="https://api.nexon.co.kr/fifaonline4/v1.0/matches/{matchid}";
+        final HttpHeaders httpHeaders=new HttpHeaders();
+        httpHeaders.set("Authorization",api_key);
+        //httpHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
+        final HttpEntity<String> entity=new HttpEntity<>(httpHeaders);
+        RestTemplate restTemplate=new RestTemplate();
+
+        return restTemplate.exchange(MatchDetailedInfoUrl,HttpMethod.GET,entity,MatchDetailedDTO.class,matchid).getBody();
+    }
 }
